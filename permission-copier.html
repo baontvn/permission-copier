@@ -8,6 +8,11 @@
 <link rel="import" href="../iron-ajax/iron-ajax.html">
 
 <dom-module id="permission-copier">
+  <style>
+    paper-checkbox ::shadow #checkmark.paper-checkbox {
+      border-color: black;
+    }
+  </style>
   <template>
 
     <iron-ajax id="getUserIdAjax" method="GET" on-response="_onResponseUserId"></iron-ajax>
@@ -28,7 +33,7 @@
           <paper-button on-click="_getGroups">Get Groups</paper-button>
         </template>
         <template is="dom-if" if="{{_isCopyAvailable}}">
-          <paper-button on-click="_copy">Copy</paper-button>
+          <paper-button on-click="_copy">Grant Permission</paper-button>
         </template>
       </div>
     </paper-card>
