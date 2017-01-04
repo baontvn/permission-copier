@@ -20,7 +20,7 @@
     <iron-ajax id="getGroupIdAjax" method="GET" on-response="_onResponseGroupId"></iron-ajax>
     <iron-ajax id="addUserToGroupAjax" method="POST" content-type="application/json" on-response="_onAddUserToGroup"></iron-ajax>
 
-    <paper-card style="width: 100%">
+    <paper-card style="width: 100%; position:relative">
       <div class="card-content">
         <paper-input id="username" label="Username"></paper-input>
         <template is="dom-repeat" items="{{_groups}}">
@@ -36,6 +36,7 @@
           <paper-button on-click="_copy">Grant Permission</paper-button>
         </template>
       </div>
+      <div id="result" style="position: absolute;top: 0; right: 0; padding: 1em; background-color: #ddd;"></div>
     </paper-card>
 
     <paper-toast id="toast" text=""></paper-toast>
@@ -79,6 +80,12 @@
       _isCopyAvailable: {
         type: Boolean,
         computed: '_computedCopyAvailable(_userId, _groups)'
+      },
+      _groupDictionary: {
+        type: Object,
+        value: function() {
+          return {};
+        }
       }
     },
     _computedCopyAvailable: function(userId, groups) {
@@ -91,7 +98,7 @@
     _onResponseUserId: function(evt) {
       var response = evt.detail.response;
       this._userId = response.resources.length === 0 ? null : response.resources[0].id;
-      alert('Completed getting user Id: ' + this._userId);
+      document.querySelector('#result').innerHTML = 'User ID: ' + this._userId;
     },
     _getGroups: function() {
       this.$.getGroupsAjax.url = this.url + '/oauth/clients/' + this.clientId;
@@ -102,6 +109,7 @@
       this._groups = response.scope;
     },
     _copy: function() {
+      document.querySelector('#result').innerHTML = 'Granting...';
       var checkboxes = document.querySelectorAll('paper-checkbox');
       this._selectedGroups = [];
       checkboxes.forEach((function(cb) {
@@ -115,6 +123,7 @@
       var response = evt.detail.response;
       if (response.resources.length !== 0) {
         var group = response.resources[0];
+        this._groupDictionary[group.id] = group.displayName;
         if (!this._isMemberAlready(group.members, this._userId)) {
           this.$.addUserToGroupAjax.url = this.url + '/Groups/' + group.id + '/members';
           this.$.addUserToGroupAjax.body = {
@@ -123,6 +132,8 @@
             value: this._userId
           };
           this.$.addUserToGroupAjax.generateRequest();
+        } else {
+          document.querySelector('#result').innerHTML = document.querySelector('#result').innerHTML + '<br/>' + group.displayName + ' is existed.';
         }
       }
     },
@@ -135,8 +146,7 @@
     },
     _onAddUserToGroup: function(evt) {
       var arr = evt.detail.url.split('/');
-      this.$.toast.text = arr[arr.length - 2] + ' is added!';
-      this.$.toast.open();
+      document.querySelector('#result').innerHTML = document.querySelector('#result').innerHTML + '<br/>' + this._groupDictionary[arr[arr.length - 2]] + ' is added.';
     }
   });
 
