@@ -1,0 +1,138 @@
+<link rel="import" href="../polymer/polymer.html"/>
+<link rel="import" href="../paper-button/paper-button.html"/>
+<link rel="import" href="../paper-input/paper-input.html"/>
+<link rel="import" href="../paper-card/paper-card.html"/>
+<link rel="import" href="../paper-checkbox/paper-checkbox.html"/>
+<link rel="import" href="../paper-toast/paper-toast.html"/>
+
+<link rel="import" href="../iron-ajax/iron-ajax.html">
+
+<dom-module id="permission-copier">
+  <template>
+
+    <iron-ajax id="getUserIdAjax" method="GET" on-response="_onResponseUserId"></iron-ajax>
+    <iron-ajax id="getGroupsAjax" method="GET" on-response="_onResponseGroups"></iron-ajax>
+    <iron-ajax id="getGroupIdAjax" method="GET" on-response="_onResponseGroupId"></iron-ajax>
+    <iron-ajax id="addUserToGroupAjax" method="POST" content-type="application/json" on-response="_onAddUserToGroup"></iron-ajax>
+
+    <paper-card style="width: 100%">
+      <div class="card-content">
+        <paper-input id="username" label="Username"></paper-input>
+        <template is="dom-repeat" items="{{_groups}}">
+          <div><paper-checkbox>{{item}}</paper-checkbox></div>
+        </template>
+      </div>
+      <div class="card-actions">
+        <paper-button on-click="_getUserId">Get User Id</paper-button>
+        <template is="dom-if" if="{{_userId}}">
+          <paper-button on-click="_getGroups">Get Groups</paper-button>
+        </template>
+        <template is="dom-if" if="{{_isCopyAvailable}}">
+          <paper-button on-click="_copy">Copy</paper-button>
+        </template>
+      </div>
+    </paper-card>
+
+    <paper-toast id="toast" text=""></paper-toast>
+
+  </template>
+</dom-module>
+
+<script type="text/javascript">
+
+  Polymer({
+    is: 'permission-copier',
+    properties:{
+      url: {
+        type: String,
+        value: ''
+      },
+      clientId: {
+        type: String,
+        value: ''
+      },
+      origin: {
+        type: String,
+        value: 'uaa'
+      },
+      _groups: {
+        type: Array,
+        value: function() {
+          return [];
+        }
+      },
+      _selectedGroups: {
+        type: Array,
+        value: function() {
+          return [];
+        }
+      },
+      _userId: {
+        type: String,
+        value: ''
+      },
+      _isCopyAvailable: {
+        type: Boolean,
+        computed: '_computedCopyAvailable(_userId, _groups)'
+      }
+    },
+    _computedCopyAvailable: function(userId, groups) {
+      return userId && groups.length !== 0;
+    },
+    _getUserId: function() {
+      this.$.getUserIdAjax.url = this.url + '/Users?attributes=id,userName&filter=userName eq ' + '"' + this.$.username.value + '"&startIndex=1';
+      this.$.getUserIdAjax.generateRequest();
+    },
+    _onResponseUserId: function(evt) {
+      var response = evt.detail.response;
+      this._userId = response.resources.length === 0 ? null : response.resources[0].id;
+      alert('Completed getting user Id: ' + this._userId);
+    },
+    _getGroups: function() {
+      this.$.getGroupsAjax.url = this.url + '/oauth/clients/' + this.clientId;
+      this.$.getGroupsAjax.generateRequest();
+    },
+    _onResponseGroups: function(evt) {
+      var response = evt.detail.response;
+      this._groups = response.scope;
+    },
+    _copy: function() {
+      var checkboxes = document.querySelectorAll('paper-checkbox');
+      this._selectedGroups = [];
+      checkboxes.forEach((function(cb) {
+        if (cb.checked) {
+          this.$.getGroupIdAjax.url = this.url + '/Groups?filter=displayName eq ' + '"' + cb.textContent.trim() + '"&startIndex=1';
+          this.$.getGroupIdAjax.generateRequest();
+        }
+      }).bind(this));
+    },
+    _onResponseGroupId: function(evt) {
+      var response = evt.detail.response;
+      if (response.resources.length !== 0) {
+        var group = response.resources[0];
+        if (!this._isMemberAlready(group.members, this._userId)) {
+          this.$.addUserToGroupAjax.url = this.url + '/Groups/' + group.id + '/members';
+          this.$.addUserToGroupAjax.body = {
+            origin: this.origin,
+            type: 'USER',
+            value: this._userId
+          };
+          this.$.addUserToGroupAjax.generateRequest();
+        }
+      }
+    },
+    _isMemberAlready: function(members, userId) {
+      var arr = members.filter(function(i) {
+        return i.value === userId;
+      });
+
+      return arr.length !== 0;
+    },
+    _onAddUserToGroup: function(evt) {
+      var arr = evt.detail.url.split('/');
+      this.$.toast.text = arr[arr.length - 2] + ' is added!';
+      this.$.toast.open();
+    }
+  });
+
+</script>

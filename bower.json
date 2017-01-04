@@ -1,0 +1,20 @@
+{
+  "name": "permission-copier",
+  "version": "1.0.0",
+  "main": [
+    "permission-copier.html"
+  ],
+  "ignore": [
+    ".*",
+    "bower_components",
+    "node_modules",
+    "test"
+  ],
+  "dependencies": {
+    "polymer": "~v1.5.0",
+	"paper-button" : "Polymer/paper-button",
+	"paper-card": "Polymer/paper-card",
+	"paper-checkbox": "Polymer/paper-checkbox",
+	"paper-toast": "Polymer/paper-toast"
+  }
+}
