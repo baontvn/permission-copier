@@ -12,9 +12,13 @@
   ],
   "dependencies": {
     "polymer": "~v1.5.0",
-	"paper-button" : "Polymer/paper-button",
-	"paper-card": "Polymer/paper-card",
-	"paper-checkbox": "Polymer/paper-checkbox",
-	"paper-toast": "Polymer/paper-toast"
+    "paper-button": "PolymerElements/paper-button",
+    "paper-card": "PolymerElements/paper-card",
+    "paper-checkbox": "PolymerElements/paper-checkbox",
+    "paper-toast": "PolymerElements/paper-toast",
+    "paper-input": "PolymerElements/paper-input"
+  },
+  "resolutions": {
+    "polymer": "^1.6.0"
   }
 }
